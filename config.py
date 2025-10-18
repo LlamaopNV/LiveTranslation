@@ -9,16 +9,18 @@ Customize translation behavior, model selection, and performance parameters
 
 # Whisper model size - affects quality and speed
 # Options: "tiny", "base", "small", "medium", "large-v2", "large-v3"
-# Recommended: "medium" for interview/demo - best quality
-WHISPER_MODEL_SIZE = "medium"
+# Recommended: "large-v3" for best quality (use for final demo)
+WHISPER_MODEL_SIZE = "large-v3"
 
 # Translation model (currently fixed to MarianMT)
 TRANSLATION_MODEL = "Helsinki-NLP/opus-mt-en-de"
 
 # TTS model for German speech synthesis
 # Default: German Thorsten voice (high quality, male voice)
-TTS_MODEL = "tts_models/de/thorsten/tacotron2-DDC"
-# Alternative: "tts_models/de/thorsten/vits" (faster, slightly lower quality)
+# tacotron2-DDC: Higher quality, slower, can stumble on some words
+# vits: Faster, better pronunciation consistency
+TTS_MODEL = "tts_models/de/thorsten/vits"
+# Alternative: "tts_models/de/thorsten/tacotron2-DDC"
 
 # ============================================================================
 # DEVICE SETTINGS
@@ -87,7 +89,8 @@ WHISPER_BEAM_SIZE = 1
 
 # Translation beam search size
 # Higher = better translation quality but slower
-TRANSLATION_BEAM_SIZE = 1
+# Recommended: 4-5 for natural German (worth the extra ~100ms)
+TRANSLATION_BEAM_SIZE = 5
 
 # Enable VAD filtering in Whisper
 # Can improve quality but may add latency

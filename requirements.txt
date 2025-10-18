@@ -2,13 +2,14 @@
 # Python 3.10+ required
 
 # IMPORTANT: Install PyTorch with CUDA first:
-# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+# For RTX 5080 (sm_120/Blackwell): pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu130
+# For older GPUs: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # Text-to-Speech (German)
 TTS  # Coqui TTS for local German speech synthesis
 
 # GPU-accelerated Streaming ASR
-faster-whisper==1.0.3
+faster-whisper==1.2.0
 torch>=2.0.0
 torchaudio>=2.0.0
 
@@ -30,3 +31,6 @@ PyQt6==6.6.1
 
 # Utilities
 python-dotenv==1.0.0
+
+# Performance optimizations
+huggingface_hub[hf_xet]>=0.16.0  # Faster model downloads from Hugging Face

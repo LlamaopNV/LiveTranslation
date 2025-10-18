@@ -338,11 +338,25 @@ class LiveTranslationWindow(QMainWindow):
 
     def init_worker(self):
         """Initialize translation worker on startup"""
+        import config
+
         device_id = self.device_combo.currentData()
+
+        # Update status to show loading
+        self.status_label.setText("🔄 Loading models... Please wait")
+        self.status_label.setStyleSheet("""
+            QLabel {
+                background-color: #fff9c4;
+                padding: 10px;
+                border-radius: 5px;
+                font-size: 12pt;
+                font-weight: bold;
+            }
+        """)
 
         # Create worker thread
         self.worker_thread = QThread()
-        self.worker = TranslationWorker(device_id, model_size="medium")
+        self.worker = TranslationWorker(device_id, model_size=config.WHISPER_MODEL_SIZE)
         self.worker.moveToThread(self.worker_thread)
 
         # Connect signals
@@ -430,10 +444,8 @@ class LiveTranslationWindow(QMainWindow):
                 font-weight: bold;
             }
         """)
-        self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        self.device_combo.setEnabled(True)
         self.is_translating = False
+        print(f"ERROR: {error_msg}")
 
     def on_started(self):
         """Handle translation started"""
@@ -452,7 +464,7 @@ class LiveTranslationWindow(QMainWindow):
     def on_stopped(self):
         """Handle translation stopped"""
         self.is_translating = False
-        self.status_label.setText("⚪ Ready")
+        self.status_label.setText("⚪ Stopped")
         self.status_label.setStyleSheet("""
             QLabel {
                 background-color: #f0f0f0;
@@ -462,9 +474,6 @@ class LiveTranslationWindow(QMainWindow):
                 font-weight: bold;
             }
         """)
-        self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        self.device_combo.setEnabled(True)
 
         if self.worker_thread:
             self.worker_thread.quit()
@@ -493,9 +502,9 @@ class LiveTranslationWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Handle window close"""
-        if self.is_translating:
-            self.stop_translation()
-            if self.worker_thread:
-                self.worker_thread.quit()
-                self.worker_thread.wait()
+        if self.worker:
+            self.worker.stop_translation()
+        if self.worker_thread:
+            self.worker_thread.quit()
+            self.worker_thread.wait()
         event.accept()

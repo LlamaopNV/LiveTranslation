@@ -1,0 +1,32 @@
+# Core dependencies for Live Translation System
+# Python 3.10+ required
+
+# IMPORTANT: Install PyTorch with CUDA first:
+# pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# Text-to-Speech (German)
+TTS  # Coqui TTS for local German speech synthesis
+
+# GPU-accelerated Streaming ASR
+faster-whisper==1.0.3
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Audio I/O
+sounddevice==0.4.6
+scipy>=1.10.0
+pydub>=0.25.1  # For MP3 export
+
+# Voice Activity Detection
+silero-vad==5.1
+
+# Translation
+transformers>=4.30.0
+sentencepiece>=0.1.99
+sacremoses>=0.0.53
+
+# GUI
+PyQt6==6.6.1
+
+# Utilities
+python-dotenv==1.0.0

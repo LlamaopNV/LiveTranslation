@@ -56,6 +56,7 @@ class StreamingTranslationEngine:
         from .whisper_engine import WhisperEngine
         from .translator import EnglishToGermanTranslator
         from ..tts.german_tts import GermanTTS
+        import config
 
         self.device = device
         self.min_chunk_duration = min_chunk_duration
@@ -66,7 +67,7 @@ class StreamingTranslationEngine:
         # Load models
         self.whisper = WhisperEngine(model_size=whisper_model_size, device=device)
         self.translator = EnglishToGermanTranslator(device=device)
-        self.tts = GermanTTS(device=device)
+        self.tts = GermanTTS(model_name=config.TTS_MODEL, device=device)
 
         # Queues and buffers
         self.audio_queue = Queue()
@@ -269,8 +270,8 @@ class StreamingTranslationEngine:
                 # Get English text with timeout
                 english_text, timestamp = self.translation_queue.get(timeout=0.1)
 
-                # Translate to German
-                german_text = self.translator.translate(english_text, num_beams=1)
+                # Translate to German with higher beam size for better quality
+                german_text = self.translator.translate(english_text, num_beams=5)
 
                 # Notify callback
                 if self.on_german_text:

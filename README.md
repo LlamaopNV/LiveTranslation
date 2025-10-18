@@ -38,7 +38,23 @@ Perfect for:
 
 ## 📦 Installation
 
-### 1. Create Virtual Environment
+### 1. Windows Optimizations (Recommended)
+
+#### Enable Developer Mode for Faster Model Caching
+Windows Developer Mode enables symlinks, which Hugging Face uses for efficient model caching:
+
+1. Open **Settings** → **Privacy & Security** → **For developers**
+2. Toggle **Developer Mode** to **On**
+3. Restart your computer
+
+**Benefits:**
+- Faster model downloads and caching
+- Reduces disk space usage for duplicate model files
+- Eliminates symlink warnings
+
+**Alternative:** Run Python as Administrator (not recommended for security)
+
+### 2. Create Virtual Environment
 ```bash
 # Windows
 python -m venv venv
@@ -49,21 +65,32 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-### 2. Install CUDA-enabled PyTorch
+### 3. Install CUDA-enabled PyTorch
+
 ```bash
-# For CUDA 12.1 (recommended for RTX 5080)
+# For RTX 5080 (Blackwell architecture - sm_120)
+pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu130
+
+# For RTX 40-series and older (CUDA 12.1)
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # For CUDA 11.8
 pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
-### 3. Install Dependencies
+**Note for RTX 5080 users:** The Blackwell architecture requires PyTorch nightly builds with CUDA 13.0 support. You'll also need CUDA 12.4 runtime libraries for CTranslate2 (faster-whisper dependency).
+
+### 4. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Test Installation
+This includes:
+- `huggingface_hub[hf_xet]` for faster model downloads (3-5x speedup)
+- All ML frameworks (faster-whisper, transformers, TTS)
+- GUI and audio libraries
+
+### 5. Test Installation
 ```bash
 python main.py --test
 ```

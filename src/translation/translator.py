@@ -1,11 +1,154 @@
 """
-English to German Translation
-Uses MarianMT model for high-quality neural machine translation
+Bidirectional Translation (English ↔ German)
+Uses MarianMT models for high-quality neural machine translation
 """
 
 import torch
 from transformers import MarianMTModel, MarianTokenizer
 from typing import List, Optional
+
+
+class GermanToEnglishTranslator:
+    """
+    Translates German text to English using MarianMT
+    Optimized for GPU acceleration
+    """
+
+    def __init__(self, device: str = "cuda"):
+        """
+        Initialize translator
+
+        Args:
+            device: Device to run on ("cuda" or "cpu")
+        """
+        self.device = device if torch.cuda.is_available() else "cpu"
+        self.model_name = "Helsinki-NLP/opus-mt-de-en"
+
+        print(f"Loading translation model: {self.model_name}...")
+
+        # Load model and tokenizer
+        self.tokenizer = MarianTokenizer.from_pretrained(self.model_name)
+        self.model = MarianMTModel.from_pretrained(self.model_name)
+
+        # Move to GPU
+        self.model.to(self.device)
+        self.model.eval()  # Set to evaluation mode
+
+        print(f"Translation model loaded on {self.device}")
+        if self.device == "cuda":
+            print(f"VRAM allocated: {torch.cuda.memory_allocated(0) / 1024**3:.2f} GB")
+
+    def translate(
+        self,
+        text: str,
+        max_length: int = 512,
+        num_beams: int = 5
+    ) -> str:
+        """
+        Translate German text to English
+
+        Args:
+            text: German text to translate
+            max_length: Maximum length of generated translation
+            num_beams: Number of beams for beam search (higher = better quality)
+
+        Returns:
+            English translation
+        """
+        if not text or not text.strip():
+            return ""
+
+        # Tokenize input
+        inputs = self.tokenizer(
+            text,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=max_length
+        ).to(self.device)
+
+        # Generate translation
+        with torch.no_grad():
+            translated = self.model.generate(
+                **inputs,
+                max_length=max_length,
+                num_beams=num_beams,
+                early_stopping=True
+            )
+
+        # Decode output
+        english_text = self.tokenizer.decode(translated[0], skip_special_tokens=True)
+
+        return english_text
+
+    def translate_batch(
+        self,
+        texts: List[str],
+        max_length: int = 512,
+        num_beams: int = 5
+    ) -> List[str]:
+        """
+        Translate multiple German texts to English in batch
+
+        Args:
+            texts: List of German texts
+            max_length: Maximum length of generated translations
+            num_beams: Number of beams for beam search
+
+        Returns:
+            List of English translations
+        """
+        if not texts:
+            return []
+
+        # Filter empty texts
+        valid_texts = [t for t in texts if t and t.strip()]
+        if not valid_texts:
+            return [""] * len(texts)
+
+        # Tokenize all inputs
+        inputs = self.tokenizer(
+            valid_texts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=max_length
+        ).to(self.device)
+
+        # Generate translations
+        with torch.no_grad():
+            translated = self.model.generate(
+                **inputs,
+                max_length=max_length,
+                num_beams=num_beams,
+                early_stopping=True
+            )
+
+        # Decode outputs
+        english_texts = [
+            self.tokenizer.decode(t, skip_special_tokens=True)
+            for t in translated
+        ]
+
+        return english_texts
+
+    def get_model_info(self) -> dict:
+        """Get information about the loaded model"""
+        return {
+            "model_name": self.model_name,
+            "device": self.device,
+            "cuda_available": torch.cuda.is_available(),
+            "gpu_name": torch.cuda.get_device_name(0) if torch.cuda.is_available() else None,
+            "vram_allocated_gb": torch.cuda.memory_allocated(0) / 1024**3 if torch.cuda.is_available() else 0
+        }
+
+    def unload(self) -> None:
+        """Unload model and free GPU memory"""
+        del self.model
+        del self.tokenizer
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        print("Translation model unloaded")
 
 
 class EnglishToGermanTranslator:

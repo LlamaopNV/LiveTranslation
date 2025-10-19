@@ -17,6 +17,7 @@ torchaudio>=2.0.0
 sounddevice==0.4.6
 scipy>=1.10.0
 pydub>=0.25.1  # For MP3 export
+pyaudiowpatch>=0.2.12.2  # WASAPI loopback for Windows system audio capture
 
 # Voice Activity Detection
 silero-vad==5.1

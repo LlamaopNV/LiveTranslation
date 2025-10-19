@@ -21,7 +21,8 @@ class GermanTTS:
     def __init__(
         self,
         model_name: str = "tts_models/de/thorsten/tacotron2-DDC",
-        device: str = "cuda"
+        device: str = "cuda",
+        output_device_id: Optional[int] = None
     ):
         """
         Initialize German TTS engine
@@ -29,9 +30,11 @@ class GermanTTS:
         Args:
             model_name: TTS model name (default is German Thorsten voice)
             device: Device to run on ("cuda" or "cpu")
+            output_device_id: Output device for audio playback (None = default)
         """
         self.device = device if torch.cuda.is_available() else "cpu"
         self.model_name = model_name
+        self.output_device_id = output_device_id
 
         print(f"Loading TTS model: {model_name}...")
 
@@ -41,6 +44,9 @@ class GermanTTS:
         print(f"TTS model loaded on {self.device}")
         if self.device == "cuda":
             print(f"VRAM allocated: {torch.cuda.memory_allocated(0) / 1024**3:.2f} GB")
+
+        if output_device_id is not None:
+            print(f"TTS output device: {output_device_id}")
 
         # Audio playback queue
         self.playback_queue = queue.Queue()
@@ -111,8 +117,8 @@ class GermanTTS:
         if np.abs(audio).max() > 1.0:
             audio = audio / np.abs(audio).max()
 
-        # Play audio
-        sd.play(audio, samplerate=sample_rate)
+        # Play audio to specified device
+        sd.play(audio, samplerate=sample_rate, device=self.output_device_id)
 
         if blocking:
             sd.wait()

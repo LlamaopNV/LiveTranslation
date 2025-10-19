@@ -33,7 +33,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 def run_gui():
     """Run the GUI application"""
     from PyQt6.QtWidgets import QApplication
-    from src.gui.main_window import LiveTranslationWindow
+    from src.gui.main_window_dual import DualTranslationWindow
 
     app = QApplication(sys.argv)
 
@@ -41,7 +41,7 @@ def run_gui():
     app.setStyle("Fusion")
 
     # Create and show window
-    window = LiveTranslationWindow()
+    window = DualTranslationWindow()
     window.show()
 
     sys.exit(app.exec())

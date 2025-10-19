@@ -7,6 +7,7 @@ import numpy as np
 from faster_whisper import WhisperModel
 from typing import Optional, Literal, Tuple, List
 import torch
+import threading
 
 
 class WhisperEngine:
@@ -54,6 +55,9 @@ class WhisperEngine:
             num_workers=num_workers
         )
 
+        # Thread lock for shared access
+        self._lock = threading.Lock()
+
         print(f"Whisper model loaded successfully")
         if self.device == "cuda":
             print(f"GPU: {torch.cuda.get_device_name(0)}")
@@ -82,49 +86,51 @@ class WhisperEngine:
         Returns:
             Tuple of (full_text, segments_list)
         """
-        # Ensure audio is float32
-        if audio.dtype != np.float32:
-            audio = audio.astype(np.float32)
+        # Thread-safe transcription (for shared Whisper instance)
+        with self._lock:
+            # Ensure audio is float32
+            if audio.dtype != np.float32:
+                audio = audio.astype(np.float32)
 
-        # Normalize audio to [-1, 1] range if needed
-        if audio.max() > 1.0 or audio.min() < -1.0:
-            audio = audio / np.abs(audio).max()
+            # Normalize audio to [-1, 1] range if needed
+            if audio.max() > 1.0 or audio.min() < -1.0:
+                audio = audio / np.abs(audio).max()
 
-        # Set default VAD parameters for better segmentation
-        if vad_parameters is None:
-            vad_parameters = {
-                "threshold": 0.5,
-                "min_speech_duration_ms": 250,
-                "min_silence_duration_ms": 500
-            }
+            # Set default VAD parameters for better segmentation
+            if vad_parameters is None:
+                vad_parameters = {
+                    "threshold": 0.5,
+                    "min_speech_duration_ms": 250,
+                    "min_silence_duration_ms": 500
+                }
 
-        # Transcribe with faster-whisper
-        segments, info = self.model.transcribe(
-            audio,
-            language=language,
-            task=task,
-            beam_size=beam_size,
-            vad_filter=vad_filter,
-            vad_parameters=vad_parameters,
-            without_timestamps=False
-        )
+            # Transcribe with faster-whisper
+            segments, info = self.model.transcribe(
+                audio,
+                language=language,
+                task=task,
+                beam_size=beam_size,
+                vad_filter=vad_filter,
+                vad_parameters=vad_parameters,
+                without_timestamps=False
+            )
 
-        # Collect segments
-        text_segments = []
-        full_text = ""
+            # Collect segments
+            text_segments = []
+            full_text = ""
 
-        for segment in segments:
-            segment_dict = {
-                "start": segment.start,
-                "end": segment.end,
-                "text": segment.text.strip()
-            }
-            text_segments.append(segment_dict)
-            full_text += segment.text
+            for segment in segments:
+                segment_dict = {
+                    "start": segment.start,
+                    "end": segment.end,
+                    "text": segment.text.strip()
+                }
+                text_segments.append(segment_dict)
+                full_text += segment.text
 
-        full_text = full_text.strip()
+            full_text = full_text.strip()
 
-        return full_text, text_segments
+            return full_text, text_segments
 
     def translate_to_german(
         self,
@@ -179,6 +185,32 @@ class WhisperEngine:
         text, _ = self.transcribe(
             audio,
             language="en",
+            task="transcribe",
+            beam_size=beam_size,
+            vad_filter=vad_filter
+        )
+        return text
+
+    def transcribe_german(
+        self,
+        audio: np.ndarray,
+        beam_size: int = 5,
+        vad_filter: bool = True
+    ) -> str:
+        """
+        Transcribe German audio to German text
+
+        Args:
+            audio: Audio data (German speech)
+            beam_size: Beam search size
+            vad_filter: Enable VAD filtering
+
+        Returns:
+            Transcribed German text
+        """
+        text, _ = self.transcribe(
+            audio,
+            language="de",
             task="transcribe",
             beam_size=beam_size,
             vad_filter=vad_filter
